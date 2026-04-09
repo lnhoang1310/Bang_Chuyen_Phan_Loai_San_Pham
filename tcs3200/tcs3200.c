@@ -5,22 +5,18 @@
 #include "freertos/task.h"
 #include "esp_err.h"
 
-// ===== PIN CONFIG =====
 #define PIN_OUT 4
 #define PIN_S2 18
 #define PIN_S3 19
 #define PIN_S0 21
 #define PIN_S1 22
 
-// ===== PCNT HANDLE =====
 static pcnt_unit_handle_t pcnt_unit = NULL;
 static pcnt_channel_handle_t pcnt_chan = NULL;
 
-// ===== CALIBRATION =====
 static tcs3200_raw_t white_ref = {1, 1, 1};
 static tcs3200_raw_t black_ref = {0, 0, 0};
 
-// ================= LOW LEVEL =================
 static void pcnt_init_new()
 {
     pcnt_unit_config_t unit_config = {
@@ -78,14 +74,12 @@ static uint16_t read_freq()
     return count;
 }
 
-// ================= API =================
 void tcs3200_init(void)
 {
     gpio_init_tcs();
     pcnt_init_new();
 }
 
-// ===== RAW READ =====
 void tcs3200_read_raw(tcs3200_raw_t *raw)
 {
     set_filter(0, 0); // RED
@@ -98,7 +92,6 @@ void tcs3200_read_raw(tcs3200_raw_t *raw)
     raw->g = read_freq();
 }
 
-// ===== CALIBRATION =====
 void tcs3200_calibrate_white(void)
 {
     vTaskDelay(pdMS_TO_TICKS(200));
@@ -111,7 +104,6 @@ void tcs3200_calibrate_black(void)
     tcs3200_read_raw(&black_ref);
 }
 
-// ===== NORMALIZE =====
 static uint8_t normalize(uint16_t val, uint16_t min, uint16_t max)
 {
     if (max <= min)
@@ -137,7 +129,6 @@ void tcs3200_get_rgb(tcs3200_rgb_t *rgb)
     rgb->b = normalize(raw.b, black_ref.b, white_ref.b);
 }
 
-// ===== COLOR DETECT (kết hợp ratio) =====
 tcs3200_color_t tcs3200_get_color(void)
 {
     tcs3200_rgb_t rgb;

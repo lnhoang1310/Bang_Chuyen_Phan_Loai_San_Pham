@@ -21,9 +21,9 @@
 #define REG_RESULT_RANGE_STATUS (0x14)
 #define REG_SLAVE_DEVICE_ADDRESS (0x8A)
 
-#define RANGE_SEQUENCE_STEP_TCC (0x10)  /* Target CentreCheck */
-#define RANGE_SEQUENCE_STEP_MSRC (0x04) /* Minimum Signal Rate Check */
-#define RANGE_SEQUENCE_STEP_DSS (0x28)  /* Dynamic SPAD selection */
+#define RANGE_SEQUENCE_STEP_TCC (0x10) 
+#define RANGE_SEQUENCE_STEP_MSRC (0x04)
+#define RANGE_SEQUENCE_STEP_DSS (0x28)
 #define RANGE_SEQUENCE_STEP_PRE_RANGE (0x40)
 #define RANGE_SEQUENCE_STEP_FINAL_RANGE (0x80)
 
