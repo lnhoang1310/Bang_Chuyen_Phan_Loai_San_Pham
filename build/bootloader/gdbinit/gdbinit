@@ -1,0 +1,2 @@
+source D:/Code/ESPIDF/Bang_Chuyen_Phan_Loai/build/bootloader/gdbinit/symbols
+source D:/Code/ESPIDF/Bang_Chuyen_Phan_Loai/build/bootloader/gdbinit/connect
