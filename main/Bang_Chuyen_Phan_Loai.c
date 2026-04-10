@@ -42,6 +42,14 @@ typedef enum
     PRODUCT_TYPE_3
 } Product_Type;
 
+typedef enum
+{
+    PROCESS_IDLE,
+    PROCESS_DETECTING,
+    PROCESS_CLASSIFY,
+    PROCESS_WAIT_SERVO
+} Process_State;
+
 /* Global Struct Variable*/
 lcd_typedef lcd;
 Classification_Mode current_mode = MODE_HEIGHT;
@@ -49,9 +57,11 @@ VL53L0X_TypeDef distance_sensor;
 tcs3200_color_t color;
 i2c_soft_typedef i2c;
 Servo_Typedef servo1, servo2;
+Button_State button = BUTTON_NONE;
 Production_Count production_count_type_hight = {0, 0, 0};
 Production_Count production_count_type_color = {0, 0, 0};
 Product_Type current_product_type = PRODUCT_UNKNOWN;
+Process_State process_state = PROCESS_IDLE;
 /*Global Variable*/
 volatile bool flag_product_detected = false;
 volatile bool flag_servo1_activated = false;
@@ -158,50 +168,48 @@ Product_Type classify_product(void)
 
 void process(void)
 {
-    if (flag_product_detected)
+    switch (process_state)
     {
-        Servo_SetAngle(&servo1, 0);
-        Servo_SetAngle(&servo2, 0);
-        color = tcs3200_get_color();
-        while (color == COLOR_UNKNOWN)
+    case PROCESS_IDLE:
+        if (flag_product_detected)
         {
+            Servo_SetAngle(&servo1, 0);
+            Servo_SetAngle(&servo2, 0);
+            color = COLOR_UNKNOWN;
+            distance_sensor.distance_cm = DISTANCE_DEFAULT;
+            process_state = PROCESS_DETECTING;
+        }
+        break;
+    case PROCESS_DETECTING:
+        if (color == COLOR_UNKNOWN)
             color = tcs3200_get_color();
-        }
-        while (distance_sensor.distance_cm > DISTANCE_DEFAULT - 2)
-        {
+        if (distance_sensor.distance_cm > DISTANCE_DEFAULT - 2)
             vl53l0x_read_range_single(&distance_sensor);
-        }
+        if (color != COLOR_UNKNOWN && distance_sensor.distance_cm <= DISTANCE_DEFAULT - 2)
+            process_state = PROCESS_CLASSIFY;
+        break;
+    case PROCESS_CLASSIFY:
         current_product_type = classify_product();
         flag_product_detected = false;
-        flag_servo1_activated = false;
-        flag_servo2_activated = false;
-    }
-    switch (current_product_type)
-    {
-    case PRODUCT_TYPE_1:
-        if (flag_servo1_activated)
+        process_state = PROCESS_WAIT_SERVO;
+        break;
+    case PROCESS_WAIT_SERVO:
+        if (current_product_type == PRODUCT_TYPE_1 && flag_servo1_activated)
         {
             Servo_SetAngle(&servo1, 90);
             flag_servo1_activated = false;
+            process_state = PROCESS_IDLE;
         }
-        break;
-    case PRODUCT_TYPE_2:
-        if (flag_servo2_activated)
+        else if (current_product_type == PRODUCT_TYPE_2 && flag_servo2_activated)
         {
             Servo_SetAngle(&servo2, 90);
             flag_servo2_activated = false;
+            process_state = PROCESS_IDLE;
         }
-        break;
-    case PRODUCT_TYPE_3:
-        if (servo1.angle != 0)
-            Servo_SetAngle(&servo1, 0);
-        if (servo2.angle != 0)
-            Servo_SetAngle(&servo2, 0);
-        break;
-    default:
+        else if (current_product_type == PRODUCT_TYPE_3)
+            process_state = PROCESS_IDLE;
         break;
     }
-    current_product_type = PRODUCT_UNKNOWN;
 }
 
 void app_main(void)
@@ -211,6 +219,7 @@ void app_main(void)
     i2c_soft_init(&i2c, GPIO_NUM_21, GPIO_NUM_22);
     vl53l0x_init(&distance_sensor, &i2c, XSHUT_PIN, RIGHT, 0);
     tcs3200_init();
+    Button_Init();
     Servo_Init(&servo1, SERVO1_TIMER, SERVO1_CHANNEL, SERVO1_GPIO);
     Servo_Init(&servo2, SERVO2_TIMER, SERVO2_CHANNEL, SERVO2_GPIO);
 
@@ -229,8 +238,20 @@ void app_main(void)
 
     while (1)
     {
+        button = Button_Pressing();
+        switch (button)
+        {
+        case BUTTON_RESET_PRESS:
+            Reset_System();
+            break;
+        case BUTTON_SWAP_MODE_PRESS:
+            current_mode = (current_mode == MODE_HEIGHT) ? MODE_COLOR : MODE_HEIGHT;
+            break;
+        default:
+            break;
+        }
         display();
         process();
-        vTaskDelay(pdMS_TO_TICKS(100));
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
