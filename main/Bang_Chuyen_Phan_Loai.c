@@ -53,9 +53,9 @@ Production_Count production_count_type_hight = {0, 0, 0};
 Production_Count production_count_type_color = {0, 0, 0};
 Product_Type current_product_type = PRODUCT_UNKNOWN;
 /*Global Variable*/
-bool flag_product_detected = false;
-bool flag_servo1_activated = false;
-bool flag_servo2_activated = false;
+volatile bool flag_product_detected = false;
+volatile bool flag_servo1_activated = false;
+volatile bool flag_servo2_activated = false;
 
 /* ISR */
 void IRAM_ATTR IR_Sensor_ISR(void *arg)
