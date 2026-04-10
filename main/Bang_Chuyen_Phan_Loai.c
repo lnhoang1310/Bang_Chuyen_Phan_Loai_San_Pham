@@ -160,6 +160,8 @@ void process(void)
 {
     if (flag_product_detected)
     {
+        Servo_SetAngle(&servo1, 0);
+        Servo_SetAngle(&servo2, 0);
         color = tcs3200_get_color();
         while (color == COLOR_UNKNOWN)
         {
@@ -170,8 +172,6 @@ void process(void)
             vl53l0x_read_range_single(&distance_sensor);
         }
         current_product_type = classify_product();
-        Servo_SetAngle(&servo1, 0);
-        Servo_SetAngle(&servo2, 0);
         flag_product_detected = false;
         flag_servo1_activated = false;
         flag_servo2_activated = false;
