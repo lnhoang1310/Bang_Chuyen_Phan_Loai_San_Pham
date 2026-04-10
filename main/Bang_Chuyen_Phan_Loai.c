@@ -62,6 +62,7 @@ Production_Count production_count_type_hight = {0, 0, 0};
 Production_Count production_count_type_color = {0, 0, 0};
 Product_Type current_product_type = PRODUCT_UNKNOWN;
 Process_State process_state = PROCESS_IDLE;
+
 /*Global Variable*/
 volatile bool flag_product_detected = false;
 volatile bool flag_servo1_activated = false;
@@ -250,8 +251,8 @@ void app_main(void)
         default:
             break;
         }
-        display();
         process();
+        display();
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
